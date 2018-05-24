@@ -1,3 +1,4 @@
+% Will probably be archived once compare_features is finished
 % This script generates auto correlations for different elongation dynamics
 % with different gene length and creates a graph comparing the widths and
 % center of the peak of their second derivatives
