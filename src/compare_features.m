@@ -6,17 +6,22 @@ addpath('utilities/');
 
 %functions for features to be analyzed
 
-features = {@extract_2nd_deriv_peak};
-feature_names = {'Peak'};
+features = {@extract_width, @extract_center, @extract_2nd_deriv_peak};
+feature_names = {'Widths', 'Centers', 'Peaks'};
 num_cases = 4;
 case_names = {'constant rate' , 'rate spread', 'var len', 'pausing'};
 feature_plots = cell(num_cases, length(features));
 
+% stuff for dealing with errorbars
+use_errorbars = true;
+feature_errors = cell(num_cases, length(features));
+num_bootstraps = 10;
+
 %defines variables universal to all scripts
 
-time_res = 10; 
+time_res = 5; 
 
-points_per_trace = 200;
+points_per_trace = 400;
 
 num_traces = 250;
 
@@ -32,14 +37,14 @@ init_dist = [.5,.5];
 
 noise = 300;
 
-construct_lengths = .95:.4:9.4; %in kb
+construct_lengths = [1.9, 2.65, 3.4, 4.7]; %in kb
 base_length = 4.7;
 
 base_time = 160; % 160 seconds to transribe 4.7kb
 
 alpha_perc = .25; % percent of 4.7kb that is ms2 loops
 
-max_delay = 100;
+max_delay = 200;
 
 % generates data and extracts statistics for each case
 
@@ -54,12 +59,12 @@ for i = 1:length(elong_times)
     traces = gen_data(elong,time_res,points_per_trace,num_traces,num_states, ...
         trans_mat, rna_per_sec, fluo_per_rna, rise_time, init_dist,noise);
     
-    corr = auto_corr_m_calc_norm(traces, max_delay);
-
+    [fps, fes] = extract_features(features,traces, ...
+        use_errorbars,max_delay,num_bootstraps);  
+    
     for f = 1:length(features)
-        funct = features{f};
-        feature = funct(corr);
-        feature_plots{case_num, f}(i) = feature;
+        feature_plots{case_num, f}(i) = fps(f);
+        feature_errors{case_num, f}(i) = fes(f);
     end
      
 end
@@ -76,12 +81,12 @@ for i = 1:length(elong_times)
         num_traces, num_states, trans_mat, rna_per_sec, fluo_per_rna, ...
         alpha_perces(i), init_dist, noise);
     
-    corr = auto_corr_m_calc_norm(traces, max_delay);
+    [fps, fes] = extract_features(features,traces, ...
+        use_errorbars,max_delay,num_bootstraps);  
     
     for f = 1:length(features)
-        funct = features{f};
-        feature = funct(corr);
-        feature_plots{case_num, f}(i) = feature;
+        feature_plots{case_num, f}(i) = fps(f);
+        feature_errors{case_num, f}(i) = fes(f);
     end
     
 end
@@ -95,13 +100,13 @@ for i = 1:length(elong_times)
         num_traces, num_states, trans_mat, rna_per_sec, fluo_per_rna, ...
         rise_time, init_dist, noise);
     
-    corr = auto_corr_m_calc_norm(traces, max_delay);
+    [fps, fes] = extract_features(features,traces, ...
+        use_errorbars,max_delay,num_bootstraps);  
     
     for f = 1:length(features)
-        funct = features{f};
-        feature = funct(corr);
-        feature_plots{case_num, f}(i) = feature;
-    end
+        feature_plots{case_num, f}(i) = fps(f);
+        feature_errors{case_num, f}(i) = fes(f);
+    end  
     
 end
 case_num = case_num + 1;
@@ -115,14 +120,13 @@ for i = 1:length(elong_times)
         sd_pause,time_res, points_per_trace, num_traces, num_states, ...
         trans_mat, rna_per_sec, fluo_per_rna, alpha_perc, init_dist, noise);
     
-    corr = auto_corr_m_calc_norm(traces, max_delay);
+    [fps, fes] = extract_features(features,traces, ...
+        use_errorbars,max_delay,num_bootstraps);  
     
     for f = 1:length(features)
-        funct = features{f};
-        feature = funct(corr);
-        feature_plots{case_num, f}(i) = feature;
+        feature_plots{case_num, f}(i) = fps(f);
+        feature_errors{case_num, f}(i) = fes(f);
     end
-    
 end
 
 case_num = case_num + 1;
@@ -131,12 +135,16 @@ for f = 1:length(features)
     fig = figure();
     
     for i = 1:num_cases
-        plot(construct_lengths, feature_plots{i,f})
+        if use_errorbars
+            errorbar(construct_lengths, feature_plots{i,f}, feature_errors{i,f});
+        else
+            plot(construct_lengths, feature_plots{i,f})
+        end
         hold on
     end
     xlabel('Size of gene (kb)');
     ylabel(strcat(feature_names{f}, ' (', num2str(time_res), ' second delays)'));
-    title(strcat('Comparing ', feature_names{f}));
+    title(['Comparing ' feature_names{f}]);
     legend(case_names);
 end
 
