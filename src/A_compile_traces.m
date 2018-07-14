@@ -6,6 +6,7 @@ clear
 FolderPath = 'C:\Users\seanm\Desktop\garcia_lab_stuff\elong_auto_corr_analysis\dat\3400b_7dT_set1\';
 % FolderPath = 'D:/Data/Nick/LivemRNA/LivemRNAFISH/Dropbox (Garcia Lab)/mHMM/weka/';
 project = '3400b_7dT_set1'; %Project Identifier
+
 %%% folders
 fig_path = ['../fig/experimental_system/' project '/preprocessing/'];
 data_path = ['../dat/' project '/']; % data mat directory

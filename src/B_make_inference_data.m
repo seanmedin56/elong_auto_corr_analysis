@@ -13,6 +13,7 @@ FOV_edge_padding = 10; % pixels
 %ID's of sets to include
 include_vec = [1];
 project = '3400b_7dT_set1';
+
 print_traces = 1; %Output PNG files for traces?
 
 %---------------------------Set Paths-------------------------------------%
@@ -39,6 +40,7 @@ big_jump1 = prctile([trace_struct.fluo],99.5);
 jump_threshold1 = big_jump1/.5; % this should be a conservative threshold for single time step increase
 big_jump3 = prctile([trace_struct.fluo3],99.5);
 jump_threshold3 = big_jump3/.5; % this should be a conservative threshold for single time step increase
+
 index_vec = 1:length(trace_struct); % convenience ref vector
 field_names = fieldnames(trace_struct);
 
@@ -47,7 +49,7 @@ jump_ct = 0;
 blip_ct1 = 0;
 blip_ct3 = 0;
 for i = 1:length(trace_struct) 
-    
+
     temp = trace_struct(i);
 
     trace1 = temp.fluo; %Load full trace, including intervening NaN's
