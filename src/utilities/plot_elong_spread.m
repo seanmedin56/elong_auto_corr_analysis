@@ -2,11 +2,14 @@ function plot_elong_spread(elongs,intervals)
 % plots spread of elongation times
 %   elongs = all the elongation times present
 %   intervals = size of bins for plotting elongation times
+
 max_elong = max(elongs{1});
 min_elong = min(elongs{1});
 for i = 2:length(elongs)
-    max_elong = max(max_elong,max(elongs{i}));
-    min_elong = min(min_elong,min(elongs{i}));
+    if ~isempty(elongs{i})
+        max_elong = max(max_elong,max(elongs{i}));
+        min_elong = min(min_elong,min(elongs{i}));
+    end
 end
 interv = (max_elong - min_elong) / intervals;
 edges = min_elong:interv:max_elong;
