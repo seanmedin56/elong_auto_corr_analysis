@@ -4,17 +4,22 @@ clear
 close all
 %%%Set Cleaning and Summary Parameters
 min_dp = 10; % minimum # dp acceptable for an inference trace
-Tres_interp = 7; % time resolution
-InterpGrid = 0:Tres_interp:60*50;
+% todo: [determine time resolution by finding the resolution that minimizes the
+% distance from all interpolated points to the closest real point (do for
+% all datasets before doing anything else. Also get rid of all single points
+% surrounded by NaNs. Also may as well cut off extraneous zeroes after]
+
 min_bin_size = 1;
 max_bin_size = 3;
 FOV_edge_padding = 10; % pixels
 %------------------------Import Raw Trace Set------------------------%
 %ID's of sets to include
-include_vec = [1];
-project = '3400b_7dT_set1';
+include_vec = 1:4;
+project = '3.4kb_data_nc13';
+Tres_interp = 7; % time resolution
+InterpGrid = 0:Tres_interp:60*55;
 
-print_traces = 1; %Output PNG files for traces?
+print_traces = 0; %Output PNG files for traces?
 
 %---------------------------Set Paths-------------------------------------%
 TracePath = ['../dat/' project '/' 'raw_traces_01' project '.mat'];
@@ -24,9 +29,7 @@ FigPath = ['../fig/experimental_system/' project '/preprocessing'];
 TraceSavePath = [FigPath '/traces/'];
 mkdir(TraceSavePath);
 mkdir(OutPath);
-% Save Names
-CleanTraceName = ['inference_traces_' project '_dT' num2str(Tres_interp) '.mat'];
-CleanNucleusName = ['inference_nuclei_' project '_dT' num2str(Tres_interp) '.mat'];
+
 
 %----------------Load Traces and Perform First Pass QC--------------------%
 %Load raw traces (saved in struct titled "trace_struct")
@@ -48,6 +51,11 @@ trace_struct_final = []; % Structure to store traces after first round of cleani
 jump_ct = 0;
 blip_ct1 = 0;
 blip_ct3 = 0;
+
+% Save Names
+CleanTraceName = ['inference_traces_' project '_dT' num2str(Tres_interp) '.mat'];
+CleanNucleusName = ['inference_nuclei_' project '_dT' num2str(Tres_interp) '.mat'];
+
 for i = 1:length(trace_struct) 
 
     temp = trace_struct(i);

@@ -3,9 +3,9 @@
 close all
 clear 
 %--------------------------Set Path Specs, ID Vars------------------------%
-FolderPath = 'C:\Users\seanm\Desktop\garcia_lab_stuff\elong_auto_corr_analysis\dat\3400b_7dT_set1\';
+FolderPath = 'C:\Users\seanm\Desktop\garcia_lab_stuff\elong_auto_corr_analysis\dat\3.4kb_data\';
 % FolderPath = 'D:/Data/Nick/LivemRNA/LivemRNAFISH/Dropbox (Garcia Lab)/mHMM/weka/';
-project = '3400b_7dT_set1'; %Project Identifier
+project = '3.4kb_data_nc13'; %Project Identifier
 
 %%% folders
 fig_path = ['../fig/experimental_system/' project '/preprocessing/'];
@@ -23,7 +23,7 @@ mkdir([ap_pos_path '/stripe_fits']);
 mkdir(fluo_path);
 %%% cleaning params
 keyword = 'eve2'; % Keyword to ensure only sets from current project are pulled
-include_vec = [1]; %data set numbers to include
+include_vec = 1:4; %data set numbers to include
 % show_ap_fit_figs = 0;
 snippet_size = 15; % particles within snippet/2+1 are at risk for tracking issues
 % pre_post_padding = 10; % max mun frames for which nucleus can be MIA at start or end
@@ -82,13 +82,13 @@ for i = 1:length(cp_filenames) % Loop through filenames
     time_raw = raw_data.ElapsedTime*60; % time vector            
     traces_raw = raw_data.AllTracesVector; % Array with a column for each trace    
     frames_raw = 1:length(time_raw); % Frame list    
-    first_frame = raw_data.nc14; % Get frame that marks start of nc14
-    last_frame = frames_raw(end); % last frame in set
+    first_frame = max(raw_data.nc13,1); % Get frame that marks start of nc14
+    last_frame = raw_data.nc14;%frames_raw(end); % last frame in set
     % filter trace mat and time
-    traces_clean = traces_raw(first_frame:end,:);
-    time_clean = time_raw(first_frame:end);    
+    traces_clean = traces_raw(first_frame:last_frame,:);
+    time_clean = time_raw(first_frame:last_frame);    
     time_clean = time_clean - min(time_clean); % Normalize to start of nc14
-    frames_clean = frames_raw(first_frame:end);    
+    frames_clean = frames_raw(first_frame:last_frame);    
     % compile nucleus info
     s_cells = struct;
     e_pass = 1;    
@@ -374,7 +374,8 @@ for i = 1:length(include_vec)
     
     % Filter for times later than specified maturation time. Also remove
     % obs with nonpositive fluorescence
-    filter = (time_all>min_mat_time)&(fluo_all>0);
+    time_used = min(min_mat_time, time_all(end) - 240);
+    filter = (time_all>time_used)&(fluo_all>0);
     fluo_all = fluo_all(filter);      
     time_all = time_all(filter);
     xp_all = xp_all(filter);
