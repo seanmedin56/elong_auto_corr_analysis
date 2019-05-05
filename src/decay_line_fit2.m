@@ -23,9 +23,9 @@ function opt = decay_line_fit2(auto_cor,upper_limits,lower_limits,hs)
     %generate function which is the expectation value of the
     %autocorrelation
     f = @(vars) [0]; %vars = [el,al,a1,a2,...b1,b2,...]
-    for i = 1:length(to_fit)
-        f = @(vars) [f(vars) full_func_cor_deriv(vars(1),vars(2), ...
-            i,vars(3:2+num_eigs),vars(3+num_eigs:end),num_deriv,cor_fun) - to_fit(i)];
+    for i = 2:length(to_fit)
+        f = @(vars) [f(vars) (full_func_cor_deriv(vars(1),vars(2), ...
+            i,vars(3:2+num_eigs),vars(3+num_eigs:end),num_deriv,cor_fun) - to_fit(i))];
     end  
     
     % run non linear least squares on function with multiple random
@@ -34,7 +34,7 @@ function opt = decay_line_fit2(auto_cor,upper_limits,lower_limits,hs)
     opt = zeros(1,num_vars);
     options = optimoptions('lsqnonlin', 'FunctionTolerance', 1e-7, ...
         'StepTolerance', 1e-7, 'OptimalityTolerance', 1e-7, 'display', 'off');
-    for j = 1:1
+    for j = 1:5
         x0 = zeros(1,num_vars);
         for i =1:num_vars
             x0(i) = rand() * (upper_limits(i) - lower_limits(i)) + lower_limits(i);
@@ -56,6 +56,9 @@ function opt = decay_line_fit2(auto_cor,upper_limits,lower_limits,hs)
                 opt(3+num_eigs:end)) / cor_fun(opt(1),opt(2),0, ...
                 opt(3:2+num_eigs),opt(3+num_eigs:end));
         end
+        %approx(2:end) = approx(2:end) * auto_cor(2) / approx(2);
+        approx(2) = auto_cor(2);
+        approx(3:end) = approx(3:end) * auto_cor(3) / approx(3);
         if ishandle(hs(1))
             set(0, 'CurrentFigure', hs(1));
             hold on

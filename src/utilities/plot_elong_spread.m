@@ -16,8 +16,10 @@ edges = min_elong:interv:max_elong;
 edges_for_plot = edges(1:end-1) + interv / 2;
 disc_elongs = cell([1,length(elongs)]);
 vals = cell([1,length(edges)-1]);
+all_elongs = [];
 figure();
 for i = 1:length(elongs)
+    all_elongs = [all_elongs elongs{i}];
     disc_elongs{i} = discretize(elongs{i},edges);
     actual_vals = zeros(1,length(edges) - 1);
     for val = 1:length(actual_vals)
@@ -29,7 +31,8 @@ for i = 1:length(elongs)
 end
 xlabel('elongation times');
 ylabel('frequency');
-title('distribution of elongation times');
+title(['distribution of elongation times ' num2str(mean(all_elongs)) ' ' ...
+    num2str(std(all_elongs))]);
 
 figure();
 means = zeros(1,length(vals));
@@ -42,5 +45,7 @@ errorbar(edges_for_plot,means,stds);
 xlabel('elongation times');
 ylabel('frequency');
 title('distribution of elongation times');
+disp(mean(all_elongs));
+disp(std(all_elongs));
 end
 
