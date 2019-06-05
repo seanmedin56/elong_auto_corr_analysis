@@ -43,17 +43,24 @@ while (t < t_max)
     
     % determine when transition to another state occurs
     lambda = -trans_mat(naive_states(end),naive_states(end));
-    dt = exprnd(1/lambda);
+    if lambda == 0
+        dt = t_max - t;
+    else
+        dt = min(exprnd(1/lambda), t_max - t);
+    end
     t = t + dt;
     
     %determine probability of transitioning to each of the other states
     rates = trans_mat(:,naive_states(end));
     rates(naive_states(end)) = 0;
-    probs = rates / lambda;
-    
-    %determine next state
-    naive_states = [naive_states randsample(1:num_states, 1, true, probs)];
-    
+    if lambda ~= 0
+        probs = rates / lambda;
+
+        %determine next state
+        naive_states = [naive_states randsample(1:num_states, 1, true, probs)];
+    else
+        naive_states = [naive_states naive_states(end)];
+    end
     %determine how many polymerases arrived before the transition occurred
     avg_time = 1 / rna_per_sec(naive_states(end-1));
     ddt = exprnd(avg_time);

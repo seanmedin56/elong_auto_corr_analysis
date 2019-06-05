@@ -11,12 +11,11 @@ function cor_tot = full_func_cor_gauss(elong, elong_spread, alph, ...
 
     %how many points to take on either side of the mean for the gaussian
     num_points = 20; 
-    left_dist_elong = max(2 * elong_spread, elong * 9 / 10);
-    left_dist_alph = max(2 * alph_spread, alph * 9 / 10);
+    left_dist_elong = min(2 * elong_spread, elong * 9 / 10);
     elongs_to_take = elong - left_dist_elong: ... 
         left_dist_elong / num_points:elong + left_dist_elong;
-    alphs_to_take = alph - left_dist_alph: ...
-        left_dist_alph / num_points: alph + left_dist_alph;
+    alphs_to_take = alph * (elong + (1 - alph_spread) * ...
+        (elongs_to_take - elong)) ./ elongs_to_take;
     cor_tot = 0;
     prob_tot = 0;
     for i = 1:num_points * 2 + 1

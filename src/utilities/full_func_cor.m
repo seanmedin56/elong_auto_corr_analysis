@@ -1,21 +1,37 @@
-function cor_tot = full_func_cor(elong,alph,tau,aes,bes)
+function [cor_tot, p_term, d_term] = full_func_cor(elong,alph_perc,tau,aes,bes)
 % calculates autocorrelation at time delay tau
-%   elong: elongatio time
-%   alph: rise time
+%   elong: elongation time
+%   alph: rise time percentage of elongation time
 %   tau: time delay
 %   aes: coefficiencts for exponential terms
 %   bes: decay values for exponential terms
-
-    alph = min(alph,elong);
+    alph_perc = max(min(1, alph_perc),0.000001);
+    alph = alph_perc * elong;
     
     %calculates poisson term
-
-    cor_tot = max(0,elong - tau - alph) + (min(alph,max(elong - tau, 0))^2 ...
-        - max(alph - tau,0)^2) / 2 / alph + max(alph - tau,0)^3 ...
-        / 3 / alph^2 + max(alph - tau,0)^2 * tau / 2 / alph^2;
+    
+    p_term = 0;
+    if tau <= min(alph,elong - alph)
+        p_term = -2 * alph / 3 + tau^3 / 6 / alph^2 - tau / 2 ...
+            - tau^2 / 2 / alph + elong;
+    elseif tau > alph && tau < elong - alph
+        p_term = elong - alph / 2 - tau;
+    elseif tau > elong - alph && tau < alph
+        p_term = -alph /6 + elong^2 / 2 / alph + tau^3 / 6 / alph^2 ...
+            + tau / 2 - tau * elong / alph;
+    elseif tau < elong
+        p_term = elong^2 / 2 / alph - tau * elong / alph + tau^2 / 2 / alph;
+    end
+        
+    
+    %p_term = max(0,elong - tau - alph) + (min(alph,max(elong - tau, 0))^2 ...
+    %    - max(alph - tau,0)^2) / 2 / alph + max(alph - tau,0)^3 ...
+    %    / 3 / alph^2 + max(alph - tau,0)^2 * tau / 2 / alph^2;
+    
+    cor_tot = p_term;
     
     %calculates dynamics terms
-    
+    d_term = 0;
     for i = 1:length(aes)
         a = aes(i);
         b = bes(i);
@@ -132,8 +148,8 @@ function cor_tot = full_func_cor(elong,alph,tau,aes,bes)
         if (isnan(cor) || cor == inf || cor == -inf)
             debug = true;
         end
-        cor_tot = cor_tot + a * cor;
+        d_term = d_term + a * cor;
     end
-
+    cor_tot = cor_tot + d_term;
 end
 
