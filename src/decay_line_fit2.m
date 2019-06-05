@@ -16,6 +16,7 @@ function opt = decay_line_fit2(auto_cor,initial_conditions, upper_limits,lower_l
     max_delay = 100;
     cor_fun = @(elong,alph_perc,tau,aes,bes) full_func_cor(elong,alph_perc,tau,aes,bes);
     f = @(vars) [0]; %vars = [el,al,a1,a2,...b1,b2,...]
+<<<<<<< HEAD
     for num_deriv = num_derivs
         to_fit = auto_cor / auto_cor(delay_offset + 1);
 
@@ -37,6 +38,13 @@ function opt = decay_line_fit2(auto_cor,initial_conditions, upper_limits,lower_l
                 num_deriv,cor_fun,delay_offset) - to_fit(i))];
         end  
     end
+=======
+    for i = 2:length(to_fit)
+        f = @(vars) [f(vars) (full_func_cor_deriv(vars(1),vars(2), ...
+            i,vars(3:2+num_eigs),vars(3+num_eigs:end),num_deriv,cor_fun) - to_fit(i))];
+    end  
+    
+>>>>>>> c1b127ab052d404dae55258065f42d213bab972e
     % run non linear least squares on function with multiple random
     % starting points and choose the one with the lowest error
     low_err = 10000;
@@ -44,6 +52,7 @@ function opt = decay_line_fit2(auto_cor,initial_conditions, upper_limits,lower_l
     options = optimoptions('lsqnonlin', 'FunctionTolerance', 1e-7, ...
         'StepTolerance', 1e-7, 'OptimalityTolerance', 1e-7, 'display', 'off');
     for j = 1:5
+<<<<<<< HEAD
         if j == 1
             x0 = initial_conditions;
         else
@@ -51,6 +60,11 @@ function opt = decay_line_fit2(auto_cor,initial_conditions, upper_limits,lower_l
             for i =1:num_vars
                 x0(i) = rand() * (upper_limits(i) - lower_limits(i)) + lower_limits(i);
             end
+=======
+        x0 = zeros(1,num_vars);
+        for i =1:num_vars
+            x0(i) = rand() * (upper_limits(i) - lower_limits(i)) + lower_limits(i);
+>>>>>>> c1b127ab052d404dae55258065f42d213bab972e
         end
         [x,err] = lsqnonlin(f,x0,lower_limits,upper_limits,options);
         if err < low_err
@@ -69,11 +83,17 @@ function opt = decay_line_fit2(auto_cor,initial_conditions, upper_limits,lower_l
                 opt(3+num_eigs:end)) / cor_fun(opt(1),opt(2),0, ...
                 opt(3:2+num_eigs),opt(3+num_eigs:end));
         end
+<<<<<<< HEAD
         
         approx((delay_offset + 1):end) = approx((delay_offset + 1):end) ...
             * auto_cor(delay_offset + 1) / approx(delay_offset + 1);
         approx(1:delay_offset) = auto_cor(1:delay_offset);
 
+=======
+        %approx(2:end) = approx(2:end) * auto_cor(2) / approx(2);
+        approx(2) = auto_cor(2);
+        approx(3:end) = approx(3:end) * auto_cor(3) / approx(3);
+>>>>>>> c1b127ab052d404dae55258065f42d213bab972e
         if ishandle(hs(1))
             set(0, 'CurrentFigure', hs(1));
             hold on
