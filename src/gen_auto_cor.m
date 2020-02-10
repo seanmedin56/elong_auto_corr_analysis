@@ -1,4 +1,4 @@
-function hs = gen_auto_cor(traces, auto, first, second, ...
+function hs = gen_auto_cor(traces, derivs, ...
                                     bootstraps, max_delay,cut)
 % Generates an autocorrelation and/or the derivatives of an
 % autocorrelation for the traces
@@ -18,50 +18,29 @@ end
 
 corr = auto_corr_m_calc_norm(traces, max_delay);
 
-corr_1st = corr(2:max_delay) - corr(1:max_delay-1);
-
-corr_2nd = corr_1st(2:max_delay-1) - corr_1st(1:max_delay-2);
-
 if bootstraps
-    [stds, stds1, stds2] = corr_bootstraps(traces,traces, max_delay,100,'m');
+    std_derivs = corr_bootstraps(traces,traces, max_delay,100, max(derivs),'m');
 end
 
-if auto
+for deriv = derivs
     h = figure;
-    if bootstraps
-        errorbar(0:max_delay-1,corr,stds);
-    else
-        plot(0:max_delay-1, corr);
+    corr_deriv = corr;
+    for i = 1:deriv
+        corr_deriv = diff(corr_deriv);
     end
-    title('Central Moment', 'FontSize', 14);
+    if deriv == 0
+       times = 0:length(corr_deriv) - 1;
+    else
+        times = 1:length(corr_deriv);
+    end
+    if bootstraps
+        errorbar(times, corr_deriv,std_derivs{deriv + 1}, '-o');
+    else
+        plot(times, corr_deriv, '-o');
+    end
+    title(['Central Moment Derivative ' num2str(deriv)], 'FontSize', 14);
     xlabel('time delay', 'FontSize', 14);
     grid on
-    hs(1) = h;
+    hs(deriv + 1) = h;
 end
-
-if first
-    h = figure;
-    if bootstraps
-        errorbar(corr_1st,stds1);
-    else
-        plot(corr_1st);
-    end
-    title('Central Moment 1st Derivative', 'FontSize', 14);
-    xlabel('time delay', 'FontSize', 14);
-    grid on
-    hs(2) = h;
-end
-
-if second
-    h = figure;
-    if bootstraps
-        errorbar(corr_2nd,stds2);
-    else
-        plot(corr_2nd);
-    end
-    title('Central Moment 2nd Derivative', 'FontSize', 14);
-    xlabel('time delay', 'FontSize', 14);
-    grid on
-    hs(3) = h;
-end
-
+hs(~ismember(1:length(hs), derivs + 1)) = -1;

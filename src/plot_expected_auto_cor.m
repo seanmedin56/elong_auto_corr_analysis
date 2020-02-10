@@ -35,11 +35,18 @@ if length(hs) > 1 && ishandle(hs(2)) && strcmp(get(hs(2),'type'),'figure')
     plot(deriv1);
     legend('Simulated', 'Expected Value');
 end
-if length(hs) > 2 && ishandle(hs(3))
-    deriv2 = deriv1(2:end) - deriv1(1:end-1);
+deriv2 = deriv1(2:end) - deriv1(1:end-1);
+if length(hs) > 2 && ishandle(hs(3)) && strcmp(get(hs(3),'type'),'figure')   
     set(0, 'CurrentFigure', hs(3));
     hold on
     plot(deriv2);
+    legend('Simulated', 'Expected Value');
+end
+deriv3 = diff(deriv2);
+if length(hs) > 3 && ishandle(hs(4)) && strcmp(get(hs(4),'type'),'figure')
+    set(0, 'CurrentFigure', hs(4));
+    hold on
+    plot(deriv3);
     legend('Simulated', 'Expected Value');
 end
 

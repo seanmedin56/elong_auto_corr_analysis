@@ -43,7 +43,7 @@ for i = 1:num_traces
 end
 
 % uncomment below to also plot spread
-%plot_elong_spread(elongs,20);
+plot_elong_spread(elongs,20);
     
 end
 

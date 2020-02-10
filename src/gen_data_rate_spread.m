@@ -1,4 +1,4 @@
-function traces = gen_data_rate_spread(elong_vars,time_res,points_per_trace, ...
+function [traces,mean_elong,elong_std] = gen_data_rate_spread(elong_vars,time_res,points_per_trace, ...
                             num_traces, num_states, trans_mat, ...
                             rna_per_sec, fluo_per_rna,MS2_rise_time, ...
                             init_dist, noise)
@@ -38,5 +38,8 @@ for i = 1:num_traces
 end
 
 % uncomment below to plot spread
-plot_elong_spread(elongs,20);
+%plot_elong_spread(elongs,20);
+all_elongs = elongs{:};
+mean_elong = mean(all_elongs);
+elong_std = std(all_elongs);
 end

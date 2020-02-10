@@ -1,4 +1,5 @@
-function [stds,stds1,stds2] = corr_bootstraps(trace1, trace2, max_delay, num_times, type)
+function std_derivs = corr_bootstraps(trace1, trace2, max_delay, num_times, ...
+    num_derivs, type)
 
 % takes random selections of traces and calculates the standard deviation
 % of the autocorrelation and its derivatives
@@ -8,9 +9,8 @@ function [stds,stds1,stds2] = corr_bootstraps(trace1, trace2, max_delay, num_tim
 %   num_times: number of times to sample the traces
 %   type: 'r' = raw moment, anything else = central moment
 
-    vals = cell([1 max_delay]);
-    first = cell([1 max_delay-1]);
-    second = cell([1 max_delay-2]);
+    vals = zeros(num_times, max_delay);
+    std_derivs = cell(1, num_derivs + 1);
     
     %iterates through random subsamples of traces
     for i = 1:num_times
@@ -28,33 +28,13 @@ function [stds,stds1,stds2] = corr_bootstraps(trace1, trace2, max_delay, num_tim
             corr = cross_corr_m_calc(sample1, sample2, max_delay);
         end
 
-        for j = 1:length(corr)
-            vals{j}(i) = corr(j);
-        end
-        
-        corr_1st_deriv = corr(2:max_delay) - corr(1:max_delay-1);
-        for j = 1:length(corr_1st_deriv)
-            first{j}(i) = corr_1st_deriv(j);
-        end
-        
-        corr_2nd_deriv = corr_1st_deriv(2:max_delay-1) - corr_1st_deriv(1:max_delay-2);
-        for j = 1:length(corr_2nd_deriv)
-            second{j}(i) = corr_2nd_deriv(j);
-        end
-        
+        vals(i,:) = corr;
     end
-    stds = zeros([1 length(vals)]);
-    for i = 1:length(vals)
-        stds(i) = std(vals{i});
-    end
-    
-    stds1 = zeros([1 length(first)]);
-    for i = 1:length(first)
-        stds1(i) = std(first{i});
-    end
-    
-    stds2 = zeros([1 length(second)]);
-    for i = 1:length(second)
-        stds2(i) = std(second{i});
+    for deriv = 0:num_derivs
+        new_vals = vals;
+        for idx = 1:deriv
+            new_vals = new_vals(:,2:end) - new_vals(:,1:end-1);
+        end
+        std_derivs{deriv + 1} = std(new_vals, 0, 1);
     end
 end
