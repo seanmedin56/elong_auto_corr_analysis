@@ -11,7 +11,7 @@ function opt = decay_line_fit2(auto_cor,initial_conditions, upper_limits,lower_l
     addpath('utilities/');
     num_vars = length(upper_limits);
     num_eigs = (num_vars - 2) / 2;
-    num_derivs = [1,2];
+    num_derivs = [2];
     delay_offset = 2;
     max_delay = 100;
     cor_fun = @(elong,alph_perc,tau,aes,bes) full_func_cor(elong,alph_perc,tau,aes,bes);

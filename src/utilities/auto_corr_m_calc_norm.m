@@ -8,8 +8,8 @@ function auto_corr_m = auto_corr_m_calc_norm(traces, max_delay)
     global_mean = 0;
     count = 0;
     for i = 1:length(traces)
-        global_mean = global_mean + sum(traces{i});
-        count = count + length(traces{i});
+        global_mean = global_mean + nansum(traces{i});
+        count = count + sum(~isnan(traces{i}));
     end
     global_mean = global_mean / count;
     

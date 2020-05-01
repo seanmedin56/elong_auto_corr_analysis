@@ -4,6 +4,7 @@ addpath('../utilities/');
 Ts = [4:0.2:20 21:100];
 aes = 0:0.02:1;
 ces = [0.1, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 100];
+ces = [1];
 b_interv = 20;
 b_orders = [0.001, 0.01, 0.1, 1, 10, 100];
 dists = struct;
@@ -19,7 +20,7 @@ for T = Ts
                     auto = zeros(1, ceil(T) + 20);
                     for delay =  0:length(auto)-1
                         [cor_tot, p_term, d_term] = full_func_cor(T,a0,delay,1,b);
-                        auto(delay + 1) = c * d_term + p_term;
+                        auto(delay + 1) = c * d_term;
                     end
                     deriv1 = diff(auto);
                     deriv2 = diff(deriv1);

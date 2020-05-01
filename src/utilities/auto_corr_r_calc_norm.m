@@ -9,10 +9,13 @@ function auto_corr_r = auto_corr_r_calc_norm(traces, max_delay)
         limit = min(max_delay, length(traces{i}));
         len = length(traces{i});
         corr = zeros([1 limit]);
+        num_points = zeros([1 limit]);
         for j = 1:limit
-            corr(j) = traces{i}(1:len - j + 1) * traces{i}(j:len)';
+            temp_mult = traces{i}(1:len - j + 1) .* traces{i}(j:len);
+            corr(j) = nansum(temp_mult);
+            num_points(j) = sum(~isnan(temp_mult));
         end
-        corr = corr ./ (len:-1:(len - limit + 1));
+        corr = corr ./ num_points;
         corrs{i} = corr / corr(1);
     end
     

@@ -1,5 +1,4 @@
-function cross_corr_m = cross_corr_m_calc(trace1, trace2, max_delay)
-
+function cross_corr_m = cross_corr_m_calc3(trace1, trace2, max_delay)
 % returns the average crosscovariance of the traces
 
 % ----------------------calculates the global means-------------------------
@@ -31,6 +30,7 @@ function cross_corr_m = cross_corr_m_calc(trace1, trace2, max_delay)
     for i = 1:length(trace2)
         new_traces2{i} = trace2{i} - global_mean2;
     end
-    cross_corr_m = cross_corr_r_calc(new_traces1, new_traces2, max_delay);
+    cross_corr_m = cross_corr_r_calc3(new_traces1, new_traces2, max_delay);
 
 end
+
