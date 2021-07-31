@@ -8,8 +8,7 @@ kons = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, ...
     10, 20, 50, 100];
 koffs = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, ...
     10, 20, 50, 100];
-koffs = [0.001];
-aes = 0:0.02:1;
+aes = 0:0.04:1;
 % ces = [0.1, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 100];
 % b_interv = 20;
 % b_orders = [0.001, 0.01, 0.1, 1, 10, 100];
@@ -39,12 +38,15 @@ for T = Ts
                 dists(idx).kon = kon;
                 dists(idx).koff = koff;
                 dists(idx).mins = find(islocalmin(deriv3));
-                [~, real_min] = min(deriv3(4:end));
-                dists(idx).abs_min = real_min + 3;
+                [~, real_min] = min(deriv3);
+                dists(idx).abs_min = real_min;
+                if length(real_min) > 1
+                    stop = true;
+                end
                 if isempty(dists(idx).mins)
                     stop = true;
                 end
-                dists(idx).maxs = find(islocalmax(deriv3));
+                %dists(idx).maxs = find(islocalmax(deriv3));
                 idx = idx + 1;
             end
         end
@@ -66,11 +68,11 @@ for i = 1:length(dists)
     else
         yes(i) = 5;
     end
-    if ~isempty(dist.maxs)
-        zes(i) = dist.maxs(end) - dist.T;
-    else
-        zes(i) = nan;
-    end
+%     if ~isempty(dist.maxs)
+%         zes(i) = dist.maxs(end) - dist.T;
+%     else
+%         zes(i) = nan;
+%     end
 end
 
 figure()
@@ -79,5 +81,7 @@ scatter(xes,yes);
 figure()
 scatter(xes,yes2);
 
-figure()
-scatter(xes, zes);
+% figure()
+% scatter(xes, zes);
+
+save('comp_explorationg_07_10_21.mat', 'dists');

@@ -1,5 +1,5 @@
 function hs = gen_auto_cor(traces, derivs, ...
-                                    bootstraps, max_delay,cut)
+                                    bootstraps, max_delay,cut, varargin)
 % Generates an autocorrelation and/or the derivatives of an
 % autocorrelation for the traces
 % traces: The traces we are taking the autocorrelation of
@@ -16,10 +16,11 @@ for i=1:length(traces)
     traces{i} = traces{i}(1 + cut:end);
 end
 
-corr = auto_corr_m_calc_norm(traces, max_delay);
+%corr = auto_corr_m_calc_norm(traces, max_delay);
+corr = fin_corr4(traces, traces, max_delay);
 
 if bootstraps
-    std_derivs = corr_bootstraps(traces,traces, max_delay,100, max(derivs),'m');
+    std_derivs = corr_bootstraps(traces,traces, max_delay,100, max(derivs),'c4');
 end
 
 for deriv = derivs
@@ -33,6 +34,9 @@ for deriv = derivs
     else
         times = 1:length(corr_deriv);
     end
+    if ~isempty(varargin)
+        times = times * varargin{1};
+    end
     if bootstraps
         errorbar(times, corr_deriv,std_derivs{deriv + 1}, '-o');
     else
@@ -40,6 +44,11 @@ for deriv = derivs
     end
     title(['Central Moment Derivative ' num2str(deriv)], 'FontSize', 14);
     xlabel('time delay', 'FontSize', 14);
+    if deriv == 0
+        ylabel('Correlation')
+    else
+        ylabel(['\Delta^' int2str(deriv) 'Correlation']); 
+    end
     grid on
     hs(deriv + 1) = h;
 end

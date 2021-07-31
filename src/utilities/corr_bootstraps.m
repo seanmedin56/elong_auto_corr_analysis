@@ -25,7 +25,7 @@ function std_derivs = corr_bootstraps(trace1, trace2, max_delay, num_times, ...
         if type == 'r'
             corr = cross_corr_r_calc(sample1, sample2, max_delay);
         elseif type == 'm'
-            corr = cross_corr_m_calc(sample1, sample2, max_delay);
+            corr = cross_corr_m_calc_norm(sample1, sample2, max_delay);
         elseif type == "r1"
             corr = cross_corr_r_calc2(sample1, sample2, max_delay);
         elseif type == "m1"
@@ -36,8 +36,16 @@ function std_derivs = corr_bootstraps(trace1, trace2, max_delay, num_times, ...
             corr = cross_corr_m_calc3(sample1, sample2, max_delay);
         elseif type == "r3"
             corr = cross_corr_r_calc4(sample1, sample2, max_delay);
-        else
+        elseif type == "r4"
             corr = cross_corr_m_calc4(sample1, sample2, max_delay);
+        elseif type == "c1"
+            corr = fin_corr1(sample1, sample2, max_delay);
+        elseif type == "c2"
+            corr = fin_corr2(sample1, sample2, max_delay);
+        elseif type == "c3"
+            corr = fin_corr3(sample1, sample2, max_delay);
+        else
+            corr = fin_corr4(sample1, sample2, max_delay);
         end
 
         vals(i,:) = corr;

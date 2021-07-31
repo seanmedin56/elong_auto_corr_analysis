@@ -2,20 +2,20 @@
 % picked out with my data cleaning methods
 
 % range of intrinstic parameters
-Ts = [6:0.5:16];
-max_delay = 25;
-aes = [0:0.2:1];
-num_states = 3;
-num_traces = 800;
-base_avg_timesR = [20:10:200 300:100:1000];
-base_sd_timesR = [ones(1,20) * 10 / 4 ones(1,8) * 100 / 4];
-rna_per_sec = [.0001, 0.2, 0.4];
-p0 = [1 0 0];
+Ts = [6:15];
+max_delay = 20;
+aes = [0:0.25:1];
+num_states = 2;
+num_traces = 400;
+k_ons = [0.001, 0.01, 0.02, 0.05, 0.1];
+rna_per_sec = [.0001, 0.34];
+p0 = [0,1];
 time_res = 10;
 fluo_per_rna = 350;
 total_time = 60 * 40;
 points_per_trace = total_time / time_res;
 time_interp = [1:points_per_trace] * time_res;
+f = 1.5;
 
 % adjusted spread of time points collected
 dt_spread1 = [time_res, 0.4];
@@ -23,195 +23,200 @@ dt_spread2 = [15, 5];
 p_spread2 = .03;
 
 % range of cleaning/dirtying parameters
-noises = [100, 350, 700];
-threshes = 600;%[200:200:1600];%600
-jump_percs = 99.5;%[95, 97, 99, 99.5, 99.9];%99.5
-p_nans = 0.2;%[.005, .01, .02, .04, .05];%.02
-min_valids = [30:5:80];%40
+noises = [0, 500, 1000, 1500];
+threshes = 1000;%[200:200:1600];%600
+jump_percs = [97, 98, 99, 99.5, 99.9];%99.5
+p_nans = 0.02;%[.005, .01, .02, .04, .05];%.02
+min_valids = [25:5:50];%40
 
 all_data = struct;
 
 % loop through combinations
 data_idx = 1;
 for T = Ts
-    for a0 = aes       
-        % generates transition rate matrix
-        R = zeros(num_states, num_states);
-        for i = 1:num_states
-            for j = 1:num_states
-                r_idx = randi(length(base_avg_timesR));
-                R(j,i) = 1 / normrnd(base_avg_timesR(r_idx), base_sd_timesR(r_idx));
-            end
-            R(i,i) = 0;
-            R(i,i) = -sum(R(:,i));
-        end
-        
-        % generates underlying polymerase data
-        base_traces = cell(1, num_traces);
-        base_times = cell(1, num_traces);
-        for i = 1:num_traces
-            [trace, arrival_times] = gillespie_gen(T * time_res, time_res, ...
-                points_per_trace, num_states, R, rna_per_sec, ...
-                fluo_per_rna, a0 * T * time_res,p0,0);
-            % uses the arrival times to generate the traces
-            t_cur = time_res;
-            trace2 = [];
-            time2 = [];
-            while t_cur < total_time
-                t_end = t_cur;
-                t_start = max([0, t_end - T * time_res]);
-                new_val = 0;
-                ind_start_before = find(arrival_times >= t_start);
-                if ~isempty(ind_start_before)
-                    i_start = ind_start_before(1);
+    for a0 = aes
+        for k_on = k_ons
+            % generates transition rate matrix
+    %        R = zeros(num_states, num_states);
+    %         for i = 1:num_states
+    %             for j = 1:num_states
+    %                 r_idx = randi(length(base_avg_timesR));
+    %                 R(j,i) = 1 / normrnd(base_avg_timesR(r_idx), base_sd_timesR(r_idx));
+    %             end
+    %             R(i,i) = 0;
+    %             R(i,i) = -sum(R(:,i));
+    %         end
+            R = [-k_on, k_on;
+                 k_on, -k_on];
 
-                    ind_end_before = find(arrival_times <= t_end);
+            % generates underlying polymerase data
+            base_traces = cell(1, num_traces);
+            base_times = cell(1, num_traces);
+            for i = 1:num_traces
+                [trace, arrival_times] = gillespie_gen(T * time_res, time_res, ...
+                    points_per_trace, num_states, R, rna_per_sec, ...
+                    fluo_per_rna, a0 * T * time_res,p0,0);
+                % uses the arrival times to generate the traces
+                t_cur = time_res;
+                trace2 = [];
+                time2 = [];
+                while t_cur < total_time
+                    t_end = t_cur;
+                    t_start = max([0, t_end - T * time_res]);
+                    new_val = 0;
+                    ind_start_before = find(arrival_times >= t_start);
+                    if ~isempty(ind_start_before)
+                        i_start = ind_start_before(1);
 
-                    if ~isempty(ind_end_before)
+                        ind_end_before = find(arrival_times <= t_end);
 
-                        i_end = ind_end_before(end);
+                        if ~isempty(ind_end_before)
 
-                        times_window = arrival_times(i_start:i_end);
+                            i_end = ind_end_before(end);
 
-                        for ii = 1:(length(times_window))
+                            times_window = arrival_times(i_start:i_end);
 
-                            t2 = t_end - times_window(ii);
-                            if t2 > a0 * T * time_res
-                                new_val = new_val + fluo_per_rna;
-                            else
-                                new_val = new_val + fluo_per_rna * ...
-                                          t2 / (a0 * T * time_res);
+                            for ii = 1:(length(times_window))
+
+                                t2 = t_end - times_window(ii);
+                                if t2 > a0 * T * time_res
+                                    new_val = new_val + fluo_per_rna;
+                                else
+                                    new_val = new_val + fluo_per_rna * ...
+                                              t2 / (a0 * T * time_res);
+                                end
                             end
                         end
                     end
+                    trace2 = [trace2 new_val];
+                    time2 = [time2, t_cur];
+                    time_pass = normrnd(dt_spread1(1), dt_spread1(2));
+                    if rand < p_spread2
+                        time_pass = time_pass + normrnd(dt_spread2(1),dt_spread2(2));
+                    end
+                    t_cur = time_pass + t_cur;
                 end
-                trace2 = [trace2 new_val];
-                time2 = [time2, t_cur];
-                time_pass = normrnd(dt_spread1(1), dt_spread1(2));
-                if rand < p_spread2
-                    time_pass = time_pass + normrnd(dt_spread2(1),dt_spread2(2));
-                end
-                t_cur = time_pass + t_cur;
+                base_traces{i} = trace2;
+                base_times{i} = time2;
             end
-            base_traces{i} = trace2;
-            base_times{i} = time2;
-        end
 
-        % loops through combinations of cleaning/dirtying parameters
-        for noise = noises
-            for thresh = threshes
-                for jump_perc = jump_percs
-                    for p_nan = p_nans
-                        for min_valid = min_valids
-                            
-                            % adds noise and nans out low values
-                            traces_used = cell(1, length(base_traces));
-                            for i = 1:length(base_traces)
-                                trace = base_traces{i};
-                                gauss_noise = normrnd(0,noise,1,length(trace));
-                                trace = trace + gauss_noise;
-                                trace(trace < thresh) = NaN;
-                                for j = 1:length(trace)
-                                    if rand < p_nan
-                                        trace(j) = NaN;
+            % loops through combinations of cleaning/dirtying parameters
+            for noise = noises
+                for thresh = threshes
+                    for jump_perc = jump_percs
+                        for p_nan = p_nans
+                            for min_valid = min_valids
+
+                                % adds noise and nans out low values
+                                traces_used = cell(1, length(base_traces));
+                                for i = 1:length(base_traces)
+                                    trace = base_traces{i};
+                                    gauss_noise = normrnd(0,noise,1,length(trace));
+                                    trace = trace + gauss_noise;
+                                    trace(trace < thresh) = NaN;
+                                    for j = 1:length(trace)
+                                        if rand < p_nan
+                                            trace(j) = NaN;
+                                        end
                                     end
+                                    traces_used{i} = trace;
                                 end
-                                traces_used{i} = trace;
-                            end
-                            
-                            % figures out threshhold for fluo change
-                            all_del_fluo = [];
-                            for i = 1:length(traces_used)
-                                all_del_fluo = [all_del_fluo abs(diff(traces_used{i}))];
-                            end
-                            num_big_jumps = 0;
-                            big_jump = prctile(all_del_fluo, jump_perc);
-                            
-                            % interpolates and divides traces
-                            fin_traces = {};
-                            idx = 1;
-                            for i = 1:length(traces_used)
-                                if isempty(~isnan(traces_used{i}))
-                                    continue
+
+                                % figures out threshhold for fluo change
+                                all_del_fluo = [];
+                                for i = 1:length(traces_used)
+                                    all_del_fluo = [all_del_fluo abs(diff(diff(traces_used{i})))];
                                 end
-                                non_nans = find(~isnan(traces_used{i}));
-                                if length(non_nans) < min_valid
-                                    continue
-                                end
-                                trace = interp1(base_times{i}(non_nans), ...
-                                    traces_used{i}(non_nans), time_interp);
-                                new_times = base_times{i}(non_nans);
-                                for j = 1:length(time_interp)
-                                    higher = find(new_times > time_interp(j));
-                                    lower = find(new_times < time_interp(j));
-                                    if isempty(higher) || isempty(lower)
+                                num_big_jumps = 0;
+                                big_jump = prctile(all_del_fluo, jump_perc);
+
+                                % interpolates and divides traces
+                                fin_traces = {};
+                                idx = 1;
+                                for i = 1:length(traces_used)
+                                    if isempty(~isnan(traces_used{i}))
                                         continue
                                     end
-                                    dist_high = new_times(higher(1)) - time_interp(j);
-                                    dist_low = time_interp(j) - new_times(lower(end));
-                                    if dist_low > time_res && dist_high > time_res
-                                        trace(j) = NaN;
+                                    non_nans = find(~isnan(traces_used{i}));
+                                    if length(non_nans) < min_valid
+                                        continue
+                                    end
+                                    trace = interp1(base_times{i}(non_nans), ...
+                                        traces_used{i}(non_nans), time_interp);
+                                    new_times = base_times{i}(non_nans);
+                                    for j = 1:length(time_interp)
+                                        higher = find(new_times > time_interp(j));
+                                        lower = find(new_times < time_interp(j));
+                                        if isempty(higher) || isempty(lower)
+                                            continue
+                                        end
+                                        dist_high = new_times(higher(1)) - time_interp(j);
+                                        dist_low = time_interp(j) - new_times(lower(end));
+                                        if dist_low > time_res*f && dist_high > time_res*f
+                                            trace(j) = NaN;
+                                        end
+                                    end
+                                    trace(trace < thresh) = NaN;
+
+                                    % axes any changes that are too big
+                                    tr_dd1 = abs([0 diff(diff(trace)) 0]);
+                                    trace(tr_dd1>big_jump) = NaN;
+                                    num_big_jumps = num_big_jumps + length(find(tr_dd1>big_jump));
+
+                                    bad_pts = [1 find(isnan(trace)) length(trace)];
+                                    for j = 2:length(bad_pts)
+                                        if bad_pts(j) - bad_pts(j-1) > min_valid
+                                            new_tr = trace(bad_pts(j-1):bad_pts(j));
+                                            fin_traces{idx} = new_tr;
+                                            idx = idx + 1;
+                                        end
                                     end
                                 end
-                                trace(trace < thresh) = NaN;
 
-                                % axes any changes that are too big
-                                tr_dd1 = abs([0 diff(diff(trace)) 0]);
-                                trace(tr_dd1>big_jump) = NaN;
-                                num_big_jumps = num_big_jumps + length(find(tr_dd1>big_jump));
+                                % runs autocorrelation
+                                auto = fin_corr4(fin_traces, fin_traces, max_delay);
+                                deriv1 = diff(auto);
+                                deriv2 = diff(deriv1);
+                                deriv3 = diff(deriv2);
 
-                                bad_pts = [1 find(isnan(trace)) length(trace)];
-                                for j = 2:length(bad_pts)
-                                    if bad_pts(j) - bad_pts(j-1) > min_valid
-                                        new_tr = trace(bad_pts(j-1):bad_pts(j));
-                                        fin_traces{idx} = new_tr;
-                                        idx = idx + 1;
-                                    end
+                                % smoothing
+                                deriv3_smooth = deriv3;
+                                deriv3_smooth(3) = (deriv3(3) * 2 + deriv3(3)) / 3;
+                                for i = 4:(length(deriv3) - 1)
+                                    deriv3_smooth(i) = 0.25*deriv3(i-1) + ...
+                                        0.5*deriv3(i) + 0.25*deriv3(i+1);
                                 end
-                            end
-                            
-                            % runs autocorrelation
-                            auto = cross_corr_m_calc3(fin_traces, fin_traces, max_delay);
-                            deriv1 = diff(auto);
-                            deriv2 = diff(deriv1);
-                            deriv3 = diff(deriv2);
+                                deriv3_smooth(end) = (deriv3_smooth(end-1) + ...
+                                    deriv3_smooth(end) * 2) / 3;
 
-                            % smoothing
-                            deriv3_smooth = deriv3;
-                            deriv3_smooth(3) = (deriv3(3) * 2 + deriv3(3)) / 3;
-                            for i = 4:(length(deriv3) - 1)
-                                deriv3_smooth(i) = 0.25*deriv3(i-1) + ...
-                                    0.5*deriv3(i) + 0.25*deriv3(i+1);
-                            end
-                            deriv3_smooth(end) = (deriv3_smooth(end-1) + ...
-                                deriv3_smooth(end) * 2) / 3;
-                            
-                            % needs offset due to noise correlations
-                            % created by interpolation
-                            [~,min_idx] = min(deriv3(3:end));
-                            min_idx = min_idx + 2;
-                            
-                            [~,min_idx_s] = min(deriv3_smooth(3:end));
-                            min_idx_s = min_idx_s + 2;
+                                % needs offset due to noise correlations
+                                % created by interpolation
+                                [~,min_idx] = min(deriv3(3:end));
+                                min_idx = min_idx + 2;
 
-                            all_data(data_idx).T = T;
-                            all_data(data_idx).a0 = a0;
-                            all_data(data_idx).noise = noise;
-                            all_data(data_idx).thresh = thresh;
-                            all_data(data_idx).jump_perc = jump_perc;
-                            all_data(data_idx).p_nan = p_nan;
-                            all_data(data_idx).min_valid = min_valid;
-                            all_data(data_idx).min3 = min_idx;
-                            all_data(data_idx).min3_s = min_idx_s;
-                            all_data(data_idx).num_traces = length(fin_traces);
-                            data_idx = data_idx + 1;
+                                [~,min_idx_s] = min(deriv3_smooth(3:end));
+                                min_idx_s = min_idx_s + 2;
+
+                                all_data(data_idx).T = T;
+                                all_data(data_idx).a0 = a0;
+                                all_data(data_idx).R = R;
+                                all_data(data_idx).noise = noise;
+                                all_data(data_idx).thresh = thresh;
+                                all_data(data_idx).jump_perc = jump_perc;
+                                all_data(data_idx).p_nan = p_nan;
+                                all_data(data_idx).min_valid = min_valid;
+                                all_data(data_idx).min3 = min_idx;
+                                all_data(data_idx).min3_s = min_idx_s;
+                                all_data(data_idx).num_traces = length(fin_traces);
+                                data_idx = data_idx + 1;
+                            end
                         end
                     end
                 end
-            end
-        end        
+            end        
+        end
     end
 end
 
-save('min_valid_results.mat', 'all_data');
+save('simulated_cleaning_06_13_21.mat', 'all_data');
 

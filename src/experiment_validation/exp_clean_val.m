@@ -7,12 +7,12 @@ cut = 0;
 
 % range of cleaning/dirtying parameters
 threshes = 0;
-jump_percs = [99, 99.25, 99.5, 99.7, 99.9, 99.99];
+jump_percs = [97, 98, 99, 99.5, 99.9];
 min_valids = 25:5:80;
 data_type = 'fluo3DN'; % options: 'fluo3D2', 'fluo3DN', 'fluo3DNRaw'
 
 max_del_z = 3;
-max_del_xy = 6;
+max_del_xy = 8;
 f = 1.5;
 
 % imports experimental data to analyze
@@ -41,7 +41,7 @@ for thresh = threshes
         for min_valid = min_valids
             num_big = 0;
             % figures out threshhold for fluo change
-            jump_thresh = prctile(diff([subset.(data_type)]), jump_perc);
+            jump_thresh = prctile(abs(diff(diff([subset.(data_type)]))), jump_perc);
 
             % interpolates and divides traces
             tracesp = {};
@@ -147,7 +147,7 @@ for thresh = threshes
             end
 
             %--------- runs first autocorrelation-------------------%
-            auto = cross_corr_m_calc(tracesp, tracesp, max_delay);
+            auto = fin_corr1(tracesp, tracesp, max_delay);
             deriv3 = diff(diff(diff(auto)));
 
             % smoothing
@@ -168,7 +168,7 @@ for thresh = threshes
             r1_min_idx_s = r1_min_idx_s + 2;
             
             %--------- runs second autocorrelation-------------------%
-            auto = cross_corr_m_calc2(tracesp2, tracesp2, max_delay);
+            auto = fin_corr2(tracesp, tracesp, max_delay);
             deriv3 = diff(diff(diff(auto)));
 
             % smoothing
@@ -189,7 +189,7 @@ for thresh = threshes
             r2_min_idx_s = r2_min_idx_s + 2;
             
             %--------- runs third autocorrelation-------------------%
-            auto = cross_corr_m_calc3(tracesp2, tracesp2, max_delay);
+            auto = fin_corr3(tracesp, tracesp, max_delay);
             deriv3 = diff(diff(diff(auto)));
 
             % smoothing
@@ -210,7 +210,7 @@ for thresh = threshes
             r3_min_idx_s = r3_min_idx_s + 2;
             
             %--------- runs fourth autocorrelation-------------------%
-            auto = cross_corr_m_calc4(tracesp, tracesp, max_delay);
+            auto = fin_corr4(tracesp, tracesp, max_delay);
             deriv3 = diff(diff(diff(auto)));
 
             % smoothing
@@ -249,5 +249,5 @@ for thresh = threshes
     end
 end     
 
-save('1_9kb_fluo3DN_04_24_21.mat', 'all_data');
+save('1_9kb_fluo3DN_06_13_21.mat', 'all_data');
 
